@@ -1,19 +1,19 @@
 using Spectre.Console;
-
+using System.Text.Json.Serialization;
 namespace ConsoleApp5;
 
 public class AdministratorMatcha
 {
-    private string nume { get; set; }
-    private string adminId { get; set; }
-    private string parola { get; set; }
-    public List<Matcherie>  Matcherii { get; set; }
-
+    public string Nume { get; private set; }
+    public string AdminId { get; private set; }
+    public string Parola { get; private set; }
+    public List<Matcherie>  Matcherii { get; private set; }
+    [JsonConstructor]
     public AdministratorMatcha(string nume, string adminId, string parola, List<Matcherie> matcherii)
     {
-        this.nume = nume;
-        this.adminId = adminId;
-        this.parola = parola;
+        this.Nume = nume;
+        this.AdminId = adminId;
+        this.Parola = parola;
         Matcherii = matcherii;
     }
 

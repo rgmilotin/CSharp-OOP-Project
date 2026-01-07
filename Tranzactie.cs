@@ -1,12 +1,12 @@
 namespace ConsoleApp5;
 using Spectre.Console;
-
+using System.Text.Json.Serialization;
 public class Tranzactie
 {
-    private string Id { get; set; }
-    private DateTime Data { get; set; }
-    private decimal suma  { get; set; }
-    private Matcherie Matcherie { get; set; }
+    public string Id { get; private set; }
+    public DateTime Data { get; private set; }
+    public decimal suma  { get; private set; }
+    public Matcherie Matcherie { get; private set; }
     public Tranzactie(string id, DateTime data, decimal suma,  Matcherie matcherie)
     {
         Id = id;
@@ -22,17 +22,17 @@ public class Rezervare
     public Matcherie Matcherie { get; private set; }
     private string ClientID { get; set; }
     public decimal Pret { get; private set; }
-    public string limitari { get; private set; }
-    public string beneficii { get; private set; }
-
-    public Rezervare(string tip, decimal pret, string limitari, string beneficii,string clientId,Matcherie matcherie)
+    public string Limitari { get; private set; }
+    public string Beneficii { get; private set; }
+    [JsonConstructor]
+    public Rezervare(string tip, decimal pret, string limitari, string beneficii,string clientId, Matcherie matcherie)
     {
         Tip = tip;
         Pret = pret;
-        this.limitari = limitari;
-        this.beneficii = beneficii;
-        this.ClientID = clientId;
-        this.Matcherie = matcherie;
+        Limitari = limitari;
+        Beneficii = beneficii;
+        ClientID = clientId;
+        Matcherie = matcherie;
     }
     
     
@@ -42,8 +42,8 @@ public class Rezervare
 
         this.Tip = AnsiConsole.Ask<string>("Introduceți tipul rezervării (ex: Masa 2 pers):");
         this.Pret = AnsiConsole.Ask<decimal>("Prețul rezervării:");
-        this.limitari = AnsiConsole.Ask<string>("Introduceți limitările (sau 'Niciuna'):");
-        this.beneficii = AnsiConsole.Ask<string>("Introduceți beneficiile:");
+        this.Limitari = AnsiConsole.Ask<string>("Introduceți limitările (sau 'Niciuna'):");
+        this.Beneficii = AnsiConsole.Ask<string>("Introduceți beneficiile:");
         
         AnsiConsole.MarkupLine("[green] Datele rezervării au fost colectate cu succes![/]");
     }
@@ -61,12 +61,12 @@ public class Rezervare
 
     public void SetLimitari(string noileLimitari)
     {
-        limitari = noileLimitari;
+        Limitari = noileLimitari;
     }
 
     public void SetBeneficii(string noileBeneficii)
     {
-        beneficii = noileBeneficii;
+        Beneficii = noileBeneficii;
     }
 
     public void SetClientID(string clid)

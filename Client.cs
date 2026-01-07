@@ -1,13 +1,15 @@
 using System.Transactions;
 using Spectre.Console;
 namespace ConsoleApp5;
-
+using Spectre.Console;
+using System.Text.Json.Serialization;
 public class Client
 {
     public string Nume{get; private set;}
-    private string Email{get;set;}
-    private List<Tranzactie> Istoric { get; set; }
-    private List<Rezervare> Rezervari { get; set; }
+    public string Email{get;private set;}
+    public List<Tranzactie> Istoric { get; private set; }
+    public  List<Rezervare> Rezervari { get; private set; }
+    [JsonConstructor]
     public Client(string nume, string email, List<Tranzactie> istoric, List<Rezervare> rezervari)
     {
         Nume = nume;

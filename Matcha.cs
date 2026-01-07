@@ -1,7 +1,9 @@
 namespace ConsoleApp5;
 using Spectre.Console;
+using System.Text.Json.Serialization;
 public class Matcha
 {
+    [JsonInclude]
     public string nume { get; set; }
     public string descriere { get; set; }
     public decimal pret { get; set; }
@@ -25,7 +27,15 @@ public class Matcherie
     public int Capacitate { get; private set; }
     public List<Matcha> Meniu {get; private set;}
     public List<Rezervare> Rezervari {get; private set;}
-    public void AfiseazaMeniu()
+    [JsonConstructor]
+    public Matcherie(string nume, string program, int Capacitate, List<Matcha> meniu, List<Rezervare> rezervari)
+        {
+            Nume = nume;
+            Program = program;
+            Capacitate= Capacitate;
+            Meniu = meniu;
+            Rezervari=rezervari;
+        }public void AfiseazaMeniu()
     {
         var table = new Table()
             .Border(TableBorder.Rounded)
@@ -46,14 +56,7 @@ public class Matcherie
         }
         AnsiConsole.Write(table);
     }
-    public Matcherie(string nume, string program, int Capa, List<Matcha> meniu, List<Rezervare> rezervari)
-    {
-        Nume = nume;
-        Program = program;
-        this.Capacitate= Capa;
-        this.Meniu = meniu;
-        this.Rezervari=rezervari;
-    }
+    
     public void SetProgram(string noulProgram)
     {
         if (!string.IsNullOrEmpty(noulProgram))
