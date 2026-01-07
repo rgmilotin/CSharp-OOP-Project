@@ -47,4 +47,4 @@ public class Matcherie
             this.Capacitate = nouaCapacitate;
         }
     }
-}
+}///dsadasdsadsa
