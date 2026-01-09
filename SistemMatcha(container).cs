@@ -1,18 +1,23 @@
 namespace ConsoleApp5;
-using System.Text.Json;
 using System.Text.Json.Serialization;
-using Spectre.Console;
+
 public class SistemMatcha
 {
-    public List<Matcherie> Magazine { get; set; }
-    public List<Client> Clienti { get; set; }
-    public List<AdministratorMatcha> Administratori { get; set; }
-    public SistemMatcha() { }//pt Json
+    public List<Matcherie> Magazine { get; set; } = new();
+    public List<Client> Clienti { get; set; } = new();
+    public List<AdministratorMatcha> Administratori { get; set; } = new();
+    
+    public List<TipRezervare> TipuriRezervari { get; set; } = new();
+
+    public SistemMatcha() { } // pt Json
+
     [JsonConstructor]
-    public SistemMatcha(List<Matcherie> magazine, List<Client> clienti, List<AdministratorMatcha> administratori)
+    public SistemMatcha(List<Matcherie> magazine, List<Client> clienti, List<AdministratorMatcha> administratori,  List<TipRezervare> tipurirezervari)
     {
-        Magazine = magazine;
-        Clienti = clienti;
-        Administratori = administratori;
+        Magazine = magazine ?? new();
+        Clienti = clienti ?? new();
+        Administratori = administratori ?? new();
+        TipuriRezervari =  tipurirezervari ?? new List<TipRezervare>();
     }
+    
 }

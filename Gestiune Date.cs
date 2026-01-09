@@ -29,12 +29,21 @@ public static class GestiuneDate
     {
         if (!File.Exists("baza_date_matcha.json")) return new SistemMatcha();
 
-        string jsonString = File.ReadAllText("baza_date_matcha.json");
-        var options = new JsonSerializerOptions
+        try
         {
-            ReferenceHandler = ReferenceHandler.IgnoreCycles
-        };
+            string jsonString = File.ReadAllText("baza_date_matcha.json");
+            var options = new JsonSerializerOptions
+            {
+                ReferenceHandler = ReferenceHandler.IgnoreCycles,
+                PropertyNameCaseInsensitive = true
+            };
 
-        return JsonSerializer.Deserialize<SistemMatcha>(jsonString, options) ?? new SistemMatcha();
+            return JsonSerializer.Deserialize<SistemMatcha>(jsonString, options) ?? new SistemMatcha();
+        }
+        catch
+        {
+            // fișier invalid → pornești cu bază goală (nu crăpă aplicația)
+            return new SistemMatcha();
+        }
     }
 }
