@@ -30,8 +30,10 @@ public class AdministratorMatcha
         }
         // 2. Adăugăm în lista adminului (proprietate)
         this.Matcherii.Add(m);
-        // 3. Adăugăm în lista globală (referință) - AICI E FIX-UL
-        ListaGlobala.Add(m);
+        if (!ReferenceEquals(this.Matcherii, ListaGlobala))
+        {
+            ListaGlobala.Add(m);
+        }
 
         AnsiConsole.MarkupLine($"[green]Succes:[/] Matcheria [blue]{m.Nume}[/] a fost adăugată în sistem și în portofoliul tău.");
         return true;
