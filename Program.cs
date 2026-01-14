@@ -1,5 +1,8 @@
 ﻿using System.Runtime.CompilerServices;
 using ConsoleApp5;
+using Spectre.Console.Rendering;
+using System.Text;
+using System.IO;
 using Spectre.Console;
 namespace ConsoleApp5
 {
@@ -1152,131 +1155,344 @@ namespace ConsoleApp5
         }
         
         static string AfiseazaEcranStartSiAlegeRol(SistemMatcha sistem)
-{
-    // dacă terminalul e mic sau raportează aiurea -> fallback simplu
-    int w = AnsiConsole.Profile.Width;
-    int h = AnsiConsole.Profile.Height;
-    if (w < 90 || h < 28)
-    {
-        AnsiConsole.Clear();
-        return AnsiConsole.Prompt(
-            new SelectionPrompt<string>()
-                .Title("[bold green]X Matcha[/] - alege rolul")
-                .AddChoices("Client", "Administrator", "Ieșire")
-        );
-    }
+        {
+            static string IncarcaAsciiArtStart()
+            {
+                string fallback = """
+                                               ||
+                                            ___||___
+                                           /________\
+                                          |  MATCHA  |
+                                          |  LATTE   |
+                                           \________/
+                                  """;
 
-    // animație (dacă aici merge, e ok)
-    RulareAnimatieMatchaSteam();
+                try
+                {
+                    string path = Path.Combine(AppContext.BaseDirectory, "assets", "start_art.txt");
+                    if (File.Exists(path))
+                        return File.ReadAllText(path);
+                }
+                catch
+                {
+                    // ignorăm și folosim fallback
+                }
 
-    // ASCII cup Starbucks (profil) cu gheață + matcha latte
-    var cupStatic = new Text(@"
-             ||
-             ||
-          ___||___
-         /________\
-        /  ______  \
-       /  /=====\   \
-      |  | [] [] |   |
-      |  | [] [] |   |   ice
-      |  | [] [] |   |
-      |  |  (S)  |   |   logo
-      |  |~~~~~~~|   |   matcha latte
-      |  |~~~~~~~|   |
-      |  |~~~~~~~|   |
-      |  |_______|   |
-       \           _/
-        \_________/
-");
+                return fallback;
+            }
 
-    AnsiConsole.Clear();
+            // ASCII art: fie din fișier assets/start_art.txt, fie fallback
+            string ascii = IncarcaAsciiArtStart();
 
-    // TOP BAR (tabs)
-    var tabs = new Grid();
-    tabs.AddColumn(new GridColumn().LeftAligned());
-    tabs.AddColumn(new GridColumn().Centered());
-    tabs.AddColumn(new GridColumn().RightAligned());
-    tabs.AddRow(
-        new Markup("[bold green]General[/] [grey]|[/] Static [grey]|[/] Dynamic [grey]|[/] Autentificare"),
-        new Markup("[grey]X Matcha v1.0[/]"),
-        new Markup($"[grey]{DateTime.Now:HH:mm}[/]")
-    );
+            int lastW = -1, lastH = -1;
 
-    AnsiConsole.Write(new Panel(tabs)
-        .Border(BoxBorder.Double)
-        .BorderColor(Color.Green)
-        .Expand());
+            while (true)
+            {
+                int w = Console.WindowWidth;
+                int h = Console.WindowHeight;
 
-    // HEADER (fără Figlet, ca să nu mai forțeze înălțimea)
-    var header = new Panel(
-        new Rows(
-            Align.Center(new Markup("[bold green]X Matcha[/]")),
-            Align.Center(new Markup("[green]X marchează matcha[/]")),
-            Align.Center(new Markup("[grey]Prima aplicatie care aduce in acelasi loc clientii, managerii si matcheriile din propriul tau oras![/]"))
-        ))
-        .Border(BoxBorder.Double)
-        .BorderColor(Color.Green)
-        .Expand();
+                // re-randăm doar când se schimbă dimensiunea (windowed <-> fullscreen)
+                if (w != lastW || h != lastH)
+                {
+                    lastW = w;
+                    lastH = h;
+                    RandareEcranStart(sistem, ascii);
+                }
 
-    AnsiConsole.Write(header);
+                // input non-blocking: 1/2/3 (se simte ca "butoane" și e robust la resize)
+                if (Console.KeyAvailable)
+                {
+                    var key = Console.ReadKey(true);
 
-    // BODY: 2 panouri în grid (mult mai stabil decât Layout)
-    int nrMagazine = sistem.Magazine?.Count ?? 0;
-    int nrClienti = sistem.Clienti?.Count ?? 0;
-    int nrAdmins = sistem.Administratori?.Count ?? 0;
+                    if (key.Key == ConsoleKey.D1 || key.Key == ConsoleKey.NumPad1)
+                        return "Client";
 
-    var left = new Panel(
-        new Rows(
-            new Markup("[bold green]📌 Dashboard[/]"),
-            new Rule().RuleStyle("green"),
-            new Markup($"[green]Matcherii:[/] {nrMagazine}"),
-            new Markup($"[green]Clienți:[/] {nrClienti}"),
-            new Markup($"[green]Administratori:[/] {nrAdmins}"),
-            new Rule().RuleStyle("green"),
-            new Markup("[grey]Navighează cu ↑↓ și Enter.[/]")
-        ))
-        .Border(BoxBorder.Rounded)
-        .BorderColor(Color.Green)
-        .Expand();
+                    if (key.Key == ConsoleKey.D2 || key.Key == ConsoleKey.NumPad2)
+                        return "Administrator";
 
-    var right = new Panel(Align.Center(cupStatic))
-        .Header("[bold green]🍵 Matcha Latte[/]")
-        .Border(BoxBorder.Rounded)
-        .BorderColor(Color.Green)
-        .Expand();
+                    if (key.Key == ConsoleKey.D3 || key.Key == ConsoleKey.NumPad3 || key.Key == ConsoleKey.Escape)
+                        return "Ieșire";
 
-    var body = new Grid();
-    body.AddColumn(new GridColumn()); // stânga
-    body.AddColumn(new GridColumn()); // dreapta
-    body.AddRow(left, right);
+                    // R = refresh manual (dacă vrei)
+                    if (key.Key == ConsoleKey.R)
+                    {
+                        lastW = -1;
+                        lastH = -1;
+                    }
+                }
 
-    AnsiConsole.Write(body);
+                Thread.Sleep(80);
+            }
+        }
+        static void RandareEcranStart(SistemMatcha sistem, string asciiArt)
+            {
+                AnsiConsole.Clear();
 
-    // “butoane” + selection prompt cu highlight
-    AnsiConsole.Write(new Panel(new Markup(
-        "[black on green]   1  LOGARE CLIENT           [/]\n" +
-        "[black on green]   2  LOGARE ADMINISTRATOR    [/]\n\n" +
-        "[white on darkred]   3  IESIRE                  [/]"
-    ))
-    .Header("[bold green]🔐 Autentificare[/]")
-    .Border(BoxBorder.Double)
-    .BorderColor(Color.Green)
-    .Expand());
+                int w = AnsiConsole.Profile.Width;
+                int h = AnsiConsole.Profile.Height;
 
-    var choice = AnsiConsole.Prompt(
-        new SelectionPrompt<string>()
-            .Title("\n[grey]Selectează o opțiune:[/]")
-            .AddChoices("LOGARE CLIENT", "LOGARE ADMINISTRATOR", "IESIRE")
-            .HighlightStyle(new Style(foreground: Color.Black, background: Color.Green))
-    );
+                // fallback simplu dacă terminalul e mic
+                if (w < 90 || h < 28)
+                {
+                    AnsiConsole.MarkupLine("[bold green]X Matcha[/]");
+                    AnsiConsole.MarkupLine("[green]X marchează matcha[/]");
+                    AnsiConsole.MarkupLine("[grey]1) Logare Client  2) Logare Administrator  3) Iesire[/]");
+                    AnsiConsole.MarkupLine("[grey](Mărește fereastra pentru UI complet)[/]");
+                    return;
+                }
 
-    return choice switch
-    {
-        "LOGARE CLIENT" => "Client",
-        "LOGARE ADMINISTRATOR" => "Administrator",
-        _ => "Ieșire"
-    };
-}
+                // TOP BAR
+                var tabs = new Grid();
+                tabs.AddColumn(new GridColumn().LeftAligned());
+                tabs.AddColumn(new GridColumn().Centered());
+                tabs.AddColumn(new GridColumn().RightAligned());
+                tabs.AddRow(
+                    new Markup("[bold green]General[/] [grey]|[/] Statistici [grey]|[/] Reviews [grey]|[/] Start"),
+                    new Markup("[grey]X Matcha v1.0[/]"),
+                    new Markup($"[grey]{DateTime.Now:HH:mm}[/]")
+                );
+
+                AnsiConsole.Write(
+                    new Panel(tabs)
+                        .Border(BoxBorder.Double)
+                        .BorderColor(Color.Green)
+                        .Expand()
+                );
+
+                // TITLU MARE (Figlet) doar dacă avem înălțime suficientă
+                if (h >= 34)
+                {
+                    var fig = new FigletText("X Matcha").Color(Color.Green);
+                    AnsiConsole.Write(Align.Center(fig));
+                }
+                else
+                {
+                    AnsiConsole.Write(new Panel(Align.Center(new Markup("[bold green]X Matcha[/]")))
+                        .Border(BoxBorder.Double)
+                        .BorderColor(Color.Green)
+                        .Expand());
+                }
+
+                // SUBTITLU + descriere (mai mic decât titlul)
+                var header = new Panel(
+                        new Rows(
+                            Align.Center(new Markup("[green]X marchează matcha[/]")),
+                            Align.Center(new Markup("[grey]Prima aplicație care aduce în același loc clienții, managerii și matcheriile din propriul tău oraș![/]"))
+                        ))
+                    .Border(BoxBorder.Rounded)
+                    .BorderColor(Color.Green)
+                    .Expand();
+
+                AnsiConsole.Write(header);
+
+                // Build panels: stats+charts, reviews, ascii
+                var statsPanel = ConstruiestePanelStatisticiSiGrafice(sistem);
+                var reviewsPanel = ConstruiestePanelTestimoniale();
+                var asciiPanel = ConstruiestePanelAscii(asciiArt);
+
+                // Layout adaptiv (în funcție de lățime)
+                if (w >= 140)
+                {
+                    var grid = new Grid();
+                    grid.AddColumn(new GridColumn()); // stânga
+                    grid.AddColumn(new GridColumn()); // mijloc
+                    grid.AddColumn(new GridColumn()); // dreapta
+                    grid.AddRow(statsPanel, reviewsPanel, asciiPanel);
+                    AnsiConsole.Write(grid);
+                }
+                else if (w >= 105)
+                {
+                    var grid = new Grid();
+                    grid.AddColumn(new GridColumn());
+                    grid.AddColumn(new GridColumn());
+                    grid.AddRow(statsPanel, asciiPanel);
+                    AnsiConsole.Write(grid);
+
+                    AnsiConsole.WriteLine();
+                    AnsiConsole.Write(reviewsPanel);
+                }
+                else
+                {
+                    AnsiConsole.Write(statsPanel);
+                    AnsiConsole.WriteLine();
+                    AnsiConsole.Write(reviewsPanel);
+                    AnsiConsole.WriteLine();
+                    AnsiConsole.Write(asciiPanel);
+                }
+
+                // "Butoane" + instrucțiuni
+                AnsiConsole.WriteLine();
+                AnsiConsole.Write(
+                    new Panel(new Markup(
+                        "[black on green]   1  LOGARE CLIENT           [/]\n" +
+                        "[black on green]   2  LOGARE ADMINISTRATOR    [/]\n\n" +
+                        "[white on darkred]   3  IESIRE (sau ESC)        [/] \n\n" +
+                        "[grey]Hint: poți redimensiona fereastra, UI-ul se reface automat. (R = refresh)[/]"
+                    ))
+                    .Header("[bold green]🔐 Start[/]")
+                    .Border(BoxBorder.Double)
+                    .BorderColor(Color.Green)
+                    .Expand()
+                );
+            }
+
+            static IRenderable ConstruiestePanelStatisticiSiGrafice(SistemMatcha sistem)
+            {
+                int nrMagazine = sistem.Magazine?.Count ?? 0;
+                int nrClienti = sistem.Clienti?.Count ?? 0;
+                int nrAdmins = sistem.Administratori?.Count ?? 0;
+
+                int totalProduse = 0;
+                int totalRezervari = 0;
+                int totalCapacitate = 0;
+                if (sistem.Magazine != null)
+                {
+                    foreach (var m in sistem.Magazine)
+                    {
+                        totalProduse += (m.Meniu?.Count ?? 0);
+                        totalRezervari += (m.Rezervari?.Count ?? 0);
+                        totalCapacitate += m.Capacitate;
+                    }
+                }
+
+                int totalTranzactii = 0;
+                if (sistem.Clienti != null)
+                {
+                    foreach (var c in sistem.Clienti)
+                        totalTranzactii += (c.Istoric?.Count ?? 0);
+                }
+
+                // Chart 1 (dif. față de admin): Breakdown pe entități
+                var breakdown = new BreakdownChart()
+                    .Width(Math.Min(60, Math.Max(30, AnsiConsole.Profile.Width / 2 - 10)))
+                    .AddItem("Produse", Math.Max(1, totalProduse), Color.Green)
+                    .AddItem("Rezervari", Math.Max(1, totalRezervari), Color.Yellow)
+                    .AddItem("Tranzactii", Math.Max(1, totalTranzactii), Color.Aqua)
+                    .AddItem("Capacitate", Math.Max(1, totalCapacitate), Color.Olive);
+
+                // Chart 2: Top 5 matcherii după rezervări
+                var bar = new BarChart()
+                    .Label("[green]Top matcherii (rezervări)[/]")
+                    .CenterLabel();
+
+                int barW = Math.Max(24, Math.Min(50, AnsiConsole.Profile.Width / 2 - 10));
+                bar.Width(barW);
+
+                var top = GetTopMatcheriiByRezervari(sistem, 5);
+                if (top.Count == 0)
+                    bar.AddItem("N/A", 0, Color.Grey);
+                else
+                    foreach (var x in top)
+                        bar.AddItem(x.nume, x.val, Color.Green);
+
+                var content = new Rows(
+                    new Markup($"[bold]Magazine:[/] {nrMagazine}   [bold]Clienți:[/] {nrClienti}   [bold]Admini:[/] {nrAdmins}"),
+                    new Markup($"[bold]Produse:[/] {totalProduse}   [bold]Rezervări:[/] {totalRezervari}   [bold]Tranzacții:[/] {totalTranzactii}"),
+                    new Rule("[green]Overview[/]"),
+                    breakdown,
+                    new Rule("[green]Popularitate[/]"),
+                    bar
+                );
+
+                return new Panel(content)
+                    .Header("[bold green]📊 Statistici rețea[/]")
+                    .Border(BoxBorder.Rounded)
+                    .BorderColor(Color.Green)
+                    .Expand();
+            }
+
+            static List<(string nume, int val)> GetTopMatcheriiByRezervari(SistemMatcha sistem, int max)
+            {
+                var list = new List<(string nume, int val)>();
+
+                if (sistem.Magazine == null) return list;
+
+                foreach (var m in sistem.Magazine)
+                {
+                    int rez = m.Rezervari?.Count ?? 0;
+                    list.Add((m.Nume, rez));
+                }
+
+                // sort desc
+                list.Sort((a, b) => b.val.CompareTo(a.val));
+
+                if (list.Count > max) list = list.GetRange(0, max);
+                return list;
+            }
+
+            static IRenderable ConstruiestePanelTestimoniale()
+            {
+                // testimoniale generate (poți schimba oricând)
+                var reviews = new[]
+                {
+                    ("Alex B.", 5, "Matcha extraordinară, servicii premium și un personal foarte atent la nevoile clientului. Cu siguranță voi mai reveni!"),
+                    ("Mara D.", 4, "Atmosferă super cozy, meniul e variat și matcha latte-ul e top. Aș mai adăuga doar câteva deserturi noi."),
+                    ("Radu P.", 5, "Rezervarea a mers rapid, iar comanda a venit foarte repede. Calitate constantă, perfect pentru zile aglomerate."),
+                    ("Ioana S.", 4, "Prețuri ok, locații bune, și îmi place că văd totul într-un singur loc. UI-ul e chiar fun.")
+                };
+
+                var table = new Table().Border(TableBorder.Rounded);
+                table.AddColumn(new TableColumn("[bold]Rating[/]").Centered());
+                table.AddColumn("Review");
+
+                foreach (var r in reviews)
+                {
+                    string stars = Stele(r.Item2);
+                    table.AddRow(
+                        $"[yellow]{stars}[/]\n[grey]{Markup.Escape(r.Item1)}[/]",
+                        $"[white]{Markup.Escape(r.Item3)}[/]"
+                    );
+                }
+
+                return new Panel(table)
+                    .Header("[bold green]⭐ Testimoniale[/]")
+                    .Border(BoxBorder.Rounded)
+                    .BorderColor(Color.Green)
+                    .Expand();
+            }
+
+            static string Stele(int n)
+            {
+                n = Math.Max(0, Math.Min(5, n));
+                return new string('★', n) + new string('☆', 5 - n);
+            }
+
+            static IRenderable ConstruiestePanelAscii(string asciiArt)
+            {
+                // dacă ASCII-ul e prea lat, îl înlocuim cu un mesaj (ca să nu “strice” layout-ul)
+                int maxLine = MaxLineLength(asciiArt);
+                int w = AnsiConsole.Profile.Width;
+                int safe = Math.Max(30, w / 3 - 6);
+
+                IRenderable inner;
+                if (maxLine > safe)
+                {
+                    inner = new Markup("[grey]ASCII art prea lat pentru fereastra curentă.\nMărește consola sau folosește un art mai îngust.[/]");
+                }
+                else
+                {
+                    // Text (nu Markup) ca să nu interpreteze [] sau alte simboluri
+                    inner = Align.Center(new Text(asciiArt));
+                }
+
+                return new Panel(inner)
+                    .Header("[bold green]🍵 Art[/]")
+                    .Border(BoxBorder.Rounded)
+                    .BorderColor(Color.Green)
+                    .Expand();
+            }
+
+            static int MaxLineLength(string s)
+            {
+                if (string.IsNullOrEmpty(s)) return 0;
+                var lines = s.Replace("\r", "").Split('\n');
+                int max = 0;
+                foreach (var line in lines)
+                    if (line.Length > max) max = line.Length;
+                return max;
+            }
+
+
 
             static void RulareAnimatieMatchaSteam()
             {
