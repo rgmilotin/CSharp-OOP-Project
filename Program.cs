@@ -197,7 +197,7 @@ namespace ConsoleApp5
                         break;
 
                     case "Creează matcherie":
-                        CreeazaMatcherie(admin);
+                        CreeazaMatcherie(admin, sistem);
                         Pauza();
                         break;
 
@@ -210,7 +210,7 @@ namespace ConsoleApp5
                         }
 
                     case "Șterge matcherie":
-                        StergeMatcherie(admin);
+                        StergeMatcherie(admin, sistem);
                         Pauza();
                         break;
 
@@ -221,17 +221,17 @@ namespace ConsoleApp5
             }
         }
 
-        static void CreeazaMatcherie(AdministratorMatcha admin)
+        static void CreeazaMatcherie(AdministratorMatcha admin, SistemMatcha sistem)
         {
             string nume = AnsiConsole.Ask<string>("Nume matcherie:");
             string program = AnsiConsole.Ask<string>("Program (ex: 08:00-22:00):");
             int capacitate = AnsiConsole.Ask<int>("Capacitate:");
 
             var m = new Matcherie(nume, program, capacitate, new List<Matcha>(), new List<Rezervare>());
-            admin.creazaMatcherie(m);
+            admin.creazaMatcherie(m, sistem.Magazine);
         }
 
-        static void StergeMatcherie(AdministratorMatcha admin)
+        static void StergeMatcherie(AdministratorMatcha admin, SistemMatcha sistem)
         {
             if (admin.Matcherii == null || admin.Matcherii.Count == 0)
             {
@@ -251,7 +251,7 @@ namespace ConsoleApp5
             foreach (var m in admin.Matcherii)
                 if (m.Nume == ales) { target = m; break; }
 
-            if (target != null) admin.stergeMatcherie(target);
+            if (target != null) admin.stergeMatcherie(target, sistem.Magazine);
         }
 
         // -------------------- TIPURI REZERVARI (ADMIN) --------------------

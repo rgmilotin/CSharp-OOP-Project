@@ -17,19 +17,24 @@ public class AdministratorMatcha
         Matcherii = matcherii;
     }
 
-    public bool creazaMatcherie(Matcherie m)// verificam in main cu un while(!creeazaMatcherie)
+    public bool creazaMatcherie(Matcherie m, List <Matcherie> ListaGlobala)// verificam in main cu un while(!creeazaMatcherie)
     {
-        if (!Matcherii.Contains(m))
+        // 1. Verificăm dacă există deja în TOATĂ rețeaua, nu doar la mine
+        foreach (var MatcherieGlobala in ListaGlobala)
         {
-            Matcherii.Add(m);
-            AnsiConsole.MarkupLine("[green]succes:[/] Matcheria [blue]{0}[/] a fost adăugată.", m.Nume);
-            return true;
+            if (MatcherieGlobala.Nume.Equals(m.Nume, StringComparison.OrdinalIgnoreCase))
+            {
+                AnsiConsole.MarkupLine($"[red]Eroare:[/] O matcherie cu numele [yellow]{m.Nume}[/] există deja în sistem!");
+                return false;
+            }
         }
-        else
-        {
-            AnsiConsole.MarkupLine("[red]eroare:[/] O matcherie cu numele [yellow]{0}[/] există deja în rețea!", m.Nume);
-            return false;
-        }
+        // 2. Adăugăm în lista adminului (proprietate)
+        this.Matcherii.Add(m);
+        // 3. Adăugăm în lista globală (referință) - AICI E FIX-UL
+        ListaGlobala.Add(m);
+
+        AnsiConsole.MarkupLine($"[green]Succes:[/] Matcheria [blue]{m.Nume}[/] a fost adăugată în sistem și în portofoliul tău.");
+        return true;
         
     }
 
@@ -68,16 +73,23 @@ public class AdministratorMatcha
         return true;
     }
 
-    public void stergeMatcherie(Matcherie m)
+    public void stergeMatcherie(Matcherie m, List<Matcherie> listaGlobala) // <--- Parametru NOU
     {
-        if (Matcherii.Contains(m))
+        // Ștergem de la admin
+        if (this.Matcherii.Contains(m))
         {
-            Matcherii.Remove(m);
-            AnsiConsole.MarkupLine("[green]succes:[/] Matcheria [blue]{0}[/] a fost stearsa.", m.Nume);
+            this.Matcherii.Remove(m);
+        }
+
+        // Ștergem și din global ca să nu mai apară la client
+        if (listaGlobala.Contains(m))
+        {
+            listaGlobala.Remove(m);
+            AnsiConsole.MarkupLine($"[green]Succes:[/] Matcheria [blue]{m.Nume}[/] a fost ștearsă definitiv.");
         }
         else
         {
-            AnsiConsole.MarkupLine("[red]eroare: [/] Matcheria [blue]{0}[/] nu exista. ", m.Nume);
+            AnsiConsole.MarkupLine($"[yellow]Atenție:[/] Matcheria a fost ștearsă din lista ta, dar nu a fost găsită în sistem.");
         }
     }
 
