@@ -2,15 +2,11 @@ using Spectre.Console;
 
 namespace ConsoleApp5
 {
-    /// <summary>
-    /// Operații de conturi: creare admin/client, selectare client, reparare liste null.
-    /// </summary>
     public static class AccountService
     {
         public static void CreeazaAdminNou(SistemMatcha sistem)
         {
-            sistem.Administratori ??= new List<AdministratorMatcha>();
-            sistem.Magazine ??= new List<Matcherie>();
+            sistem.Administratori ??= new List<AdminAccount>();
 
             Console.Clear();
             AnsiConsole.Write(new Rule("[green]Creare Administrator[/]").RuleStyle("grey"));
@@ -18,7 +14,6 @@ namespace ConsoleApp5
             string nume = AnsiConsole.Ask<string>("Nume admin:");
             string idNou = AnsiConsole.Ask<string>("Admin ID nou:");
 
-            // AdminId unic
             foreach (var a in sistem.Administratori)
                 if (a.AdminId == idNou)
                 {
@@ -29,9 +24,7 @@ namespace ConsoleApp5
 
             string parolaNoua = AnsiConsole.Prompt(new TextPrompt<string>("Parolă nouă:").Secret());
 
-            // Important: bind la lista globală de matcherii
-            var adminNou = new AdministratorMatcha(nume, idNou, parolaNoua, sistem.Magazine);
-            sistem.Administratori.Add(adminNou);
+            sistem.Administratori.Add(new AdminAccount(nume, idNou, parolaNoua));
 
             CommonUI.SalvareSistem(sistem);
             AnsiConsole.MarkupLine("[green]Administrator creat și salvat![/]");
@@ -40,7 +33,7 @@ namespace ConsoleApp5
 
         public static void CreeazaContClient(SistemMatcha sistem)
         {
-            sistem.Clienti ??= new List<Client>();
+            sistem.Clienti ??= new List<ClientAccount>();
 
             Console.Clear();
             AnsiConsole.Write(new Rule("[green]Creare cont client[/]").RuleStyle("grey"));
@@ -48,7 +41,6 @@ namespace ConsoleApp5
             string nume = AnsiConsole.Ask<string>("Nume client:");
             string email = AnsiConsole.Ask<string>("Email:");
 
-            // Email unic (recomandat)
             foreach (var c in sistem.Clienti)
                 if (string.Equals(c.Email, email, StringComparison.OrdinalIgnoreCase))
                 {
@@ -57,15 +49,14 @@ namespace ConsoleApp5
                     return;
                 }
 
-            var clientNou = new Client(nume, email, new List<Tranzactie>(), new List<Rezervare>());
-            sistem.Clienti.Add(clientNou);
+            sistem.Clienti.Add(new ClientAccount(nume, email, new List<Tranzactie>(), new List<Rezervare>()));
 
             CommonUI.SalvareSistem(sistem);
             AnsiConsole.MarkupLine("[green]Cont client creat și salvat![/]");
             CommonUI.Pauza();
         }
 
-        public static Client? AlegeClientDinSistem(SistemMatcha sistem)
+        public static ClientAccount? AlegeClientDinSistem(SistemMatcha sistem)
         {
             if (sistem.Clienti == null || sistem.Clienti.Count == 0)
             {
@@ -74,8 +65,7 @@ namespace ConsoleApp5
                 return null;
             }
 
-            // Map "Nume (email)" -> Client
-            var map = new Dictionary<string, Client>();
+            var map = new Dictionary<string, ClientAccount>();
             foreach (var c in sistem.Clienti)
             {
                 string key = $"{c.Nume} ({c.Email})";
@@ -100,10 +90,7 @@ namespace ConsoleApp5
             return map[ales];
         }
 
-        /// <summary>
-        /// Repară clientul dacă JSON a încărcat liste null (și proprietățile au private set).
-        /// </summary>
-        public static Client FixClientIfNeeded(SistemMatcha sistem, Client client)
+        public static ClientAccount FixClientIfNeeded(SistemMatcha sistem, ClientAccount client)
         {
             bool needsFix = (client.Istoric == null) || (client.Rezervari == null);
             if (!needsFix) return client;
@@ -111,7 +98,7 @@ namespace ConsoleApp5
             var ist = client.Istoric ?? new List<Tranzactie>();
             var rez = client.Rezervari ?? new List<Rezervare>();
 
-            var fixedClient = new Client(client.Nume, client.Email, ist, rez);
+            var fixedClient = new ClientAccount(client.Nume, client.Email, ist, rez);
 
             int idx = sistem.Clienti.IndexOf(client);
             if (idx >= 0) sistem.Clienti[idx] = fixedClient;

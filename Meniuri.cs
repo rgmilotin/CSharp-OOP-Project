@@ -1,80 +1,142 @@
-namespace ConsoleApp5;
 using Spectre.Console;
-public static class Meniuri
+using System.Text;
+
+namespace ConsoleApp5
 {
-    public static void AfiseazaDashboardClient(Client client, SistemMatcha sistem)
+    public static class Meniuri
     {
-        Console.Clear();
-
-        // 1. Creăm structura ecranului: Stânga (Meniu) și Dreapta (Profil + Info)
-        var layout = new Layout("Root")
-            .SplitColumns(
-                new Layout("Meniu").Ratio(2), // Ocupă 2/3 din ecran
-                new Layout("Profil").Ratio(1)  // Ocupă 1/3 din ecran
-            );
-
-        // 2. Construim tabelul cu toate produsele din toate magazinele (sau primul magazin)
-        var tabelProduse = new Table()
-            .Border(TableBorder.Rounded)
-            .BorderColor(Color.Green)
-            .Title("[bold green]🍵 REȚEAUA DE MATCHERII[/]")
-            .AddColumn("Magazin")
-            .AddColumn("Produs")
-            .AddColumn(new TableColumn("Preț").Centered());
-        if (sistem.Magazine != null && sistem.Magazine.Count > 0)
+        public static void AfiseazaDashboardClient(ClientAccount client, SistemMatcha sistem)
         {
-            foreach (var magazin in sistem.Magazine)
+            Console.Clear();
+
+            // Heuristică simplă ca să nu “mănânce” ecranul (și să rămână loc pentru prompt)
+            int h = AnsiConsole.Profile.Height;
+            int maxMatcherii = h < 32 ? 2 : (h < 40 ? 3 : 4);
+            int maxProdusePerMatcherie = h < 32 ? 2 : (h < 40 ? 3 : 4);
+
+            // Layout 2 coloane
+            var root = new Layout("Root");
+            var left = new Layout("Meniu");
+            var right = new Layout("Profil");
+            root.SplitColumns(left, right);
+
+            // (în versiuni mai vechi, Ratio e PROPERTY)
+            left.Ratio = 2;
+            right.Ratio = 1;
+
+            // -------------------- STÂNGA: tabel compact cu matcherii + MENIU per matcherie --------------------
+            var t = new Table()
+                .Border(TableBorder.Rounded)
+                .BorderColor(Color.Green)
+                .Title("[bold green]🍵 MATCHERII & MENIURI[/]");
+
+            t.AddColumn("Locație");
+            t.AddColumn("Program");
+            t.AddColumn(new TableColumn("Locuri libere").RightAligned());
+            t.AddColumn("Meniu (preview)");
+
+            if (sistem.Magazine == null || sistem.Magazine.Count == 0)
             {
-                // Dacă magazinul are produse, le listăm pe toate
-                if (magazin.Meniu != null && magazin.Meniu.Count > 0)
+                t.AddRow("[red]N/A[/]", "[red]N/A[/]", "-", "[grey]Nu există matcherii[/]");
+            }
+            else
+            {
+                // Poți sorta cum vrei: alfabet, popularitate etc.
+                var list = sistem.Magazine
+                    .OrderBy(m => m.Nume)
+                    .Take(maxMatcherii)
+                    .ToList();
+
+                foreach (var m in list)
                 {
-                    foreach (var produs in magazin.Meniu)
-                    {
-                        tabelProduse.AddRow(
-                            Markup.Escape(magazin.Nume), 
-                            Markup.Escape(produs.nume), 
-                            $"[yellow]{produs.pret} RON[/]"
-                        );
-                    }
+                    int rez = m.Rezervari?.Count ?? 0;
+                    int cap = m.Capacitate <= 0 ? 1 : m.Capacitate;
+                    int libere = Math.Max(0, cap - rez);
+
+                    string locuriCell = libere > 0
+                        ? $"[green]{libere}/{cap}[/]"
+                        : $"[red]{libere}/{cap}[/]";
+
+                    string meniuCell = BuildMeniuPreview(m, maxProdusePerMatcherie);
+
+                    t.AddRow(
+                        $"[white]{Markup.Escape(m.Nume)}[/]",
+                        $"[grey]{Markup.Escape(m.Program)}[/]",
+                        locuriCell,
+                        meniuCell
+                    );
                 }
-                else
+
+                // Dacă există mai multe matcherii decât afișăm
+                if (sistem.Magazine.Count > maxMatcherii)
                 {
-                    // Dacă magazinul e nou și nu are produse, ÎL AFIȘĂM ORICUM
-                    // Astfel clientul știe că locația există
-                    tabelProduse.AddRow(
-                        $"[blue]{Markup.Escape(magazin.Nume)}[/]", 
-                        "[grey italic]În curând... (meniu indisponibil)[/]", 
-                        "-"
+                    t.AddRow(
+                        "[grey]…[/]",
+                        "[grey](mai multe locații)[/]",
+                        "[grey]…[/]",
+                        $"[grey]Afișate {maxMatcherii} din {sistem.Magazine.Count}[/]"
                     );
                 }
             }
+
+            var leftPanel = new Panel(t)
+                .Border(BoxBorder.Rounded)
+                .BorderColor(Color.Green)
+                .Header("[bold green]Rețea[/]")
+                .Expand();
+
+            // -------------------- DREAPTA: profil scurt --------------------
+            int rezCount = client.Rezervari?.Count ?? 0;
+            int ordersCount = client.Istoric?.Count ?? 0;
+
+            var profil = new Rows(
+                new Markup($"[bold]Utilizator:[/] {Markup.Escape(client.Nume)}"),
+                new Markup($"[bold]Email:[/] [blue]{Markup.Escape(client.Email)}[/]"),
+                new Rule("[yellow]Activitate[/]"),
+                new Markup($"[bold]Rezervări:[/] [yellow]{rezCount}[/]"),
+                new Markup($"[bold]Comenzi:[/] [green]{ordersCount}[/]"),
+                new Rule(),
+                new Markup("[grey]Opțiunile sunt afișate imediat sub dashboard[/]")
+            );
+
+            var rightPanel = new Panel(profil)
+                .Border(BoxBorder.Rounded)
+                .BorderColor(Color.Cyan1)
+                .Header("[bold cyan]👤 Profil[/]")
+                .Expand();
+
+            left.Update(leftPanel);
+            right.Update(rightPanel);
+
+            AnsiConsole.Write(root);
+            AnsiConsole.WriteLine();
         }
-        else
+
+        private static string BuildMeniuPreview(Matcherie m, int maxItems)
         {
-            tabelProduse.AddRow("[red]Eroare[/]", "[red]Nu există magazine înregistrate în sistem![/]", "-");
+            if (m.Meniu == null || m.Meniu.Count == 0)
+                return "[grey italic]În curând... (meniu indisponibil)[/]";
+
+            // maxItems produse, restul “… (+X)”
+            int take = Math.Min(maxItems, m.Meniu.Count);
+            int extra = m.Meniu.Count - take;
+
+            var sb = new StringBuilder();
+
+            for (int i = 0; i < take; i++)
+            {
+                var p = m.Meniu[i];
+                sb.Append($"[green]•[/] {Markup.Escape(p.nume)} [grey]({p.pret} RON)[/]");
+                if (i < take - 1) sb.Append('\n');
+            }
+
+            if (extra > 0)
+            {
+                sb.Append('\n');
+                sb.Append($"[grey]… (+{extra} produse)[/]");
+            }
+
+            return sb.ToString();
         }
-
-        // 3. Construim panoul de profil pentru client
-        var profilContent = new Rows(
-            new Markup($"[bold]Utilizator:[/] {client.Nume}"),
-            new Markup($"[bold]Email:[/] [blue]{client.Email}[/]"),
-            new Rule("[yellow]Activitate[/]"),
-            new Markup($"[bold]Rezervări:[/] {client.Rezervari.Count}"),
-            new Markup($"[bold]Comenzi efectuate:[/] {client.Istoric.Count}"),
-            new Rule(),
-            new Markup("[grey]Folosește meniul de mai jos pentru acțiuni[/]")
-        );
-
-        var panouProfil = new Panel(profilContent)
-            .Header("[bold cyan]👤 PROFILUL TĂU[/]")
-            .Expand();
-
-        // 4. Actualizăm secțiunile layout-ului cu obiectele create
-        layout["Meniu"].Update(new Panel(tabelProduse).Expand());
-        layout["Profil"].Update(panouProfil);
-
-        // 5. Afișăm totul pe ecran
-        AnsiConsole.Write(layout);
-        AnsiConsole.WriteLine();
     }
 }

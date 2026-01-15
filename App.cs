@@ -54,8 +54,8 @@ namespace ConsoleApp5
         private static void EnsureCollections(SistemMatcha sistem)
         {
             sistem.Magazine ??= new List<Matcherie>();
-            sistem.Clienti ??= new List<Client>();
-            sistem.Administratori ??= new List<AdministratorMatcha>();
+            sistem.Clienti ??= new List<ClientAccount>();
+            sistem.Administratori ??= new List<AdminAccount>();
             sistem.TipuriRezervari ??= new List<TipRezervare>();
         }
     }
