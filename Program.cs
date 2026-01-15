@@ -1247,273 +1247,541 @@ namespace ConsoleApp5
                 Thread.Sleep(80);
             }
         }
-        static void RandareEcranStart(SistemMatcha sistem, string asciiArt)
+        static List<(string nume, int val)> GetTopMatcheriiByRezervari(SistemMatcha sistem, int max)
+        {
+            var list = new List<(string nume, int val)>();
+
+            if (sistem.Magazine == null) return list;
+
+            foreach (var m in sistem.Magazine)
             {
-                AnsiConsole.Clear();
+                int rez = m.Rezervari?.Count ?? 0;
+                list.Add((m.Nume, rez));
+            }
 
-                int w = AnsiConsole.Profile.Width;
-                int h = AnsiConsole.Profile.Height;
+            // sort desc
+            list.Sort((a, b) => b.val.CompareTo(a.val));
 
-                // fallback simplu dacă terminalul e mic
-                if (w < 90 || h < 28)
-                {
-                    AnsiConsole.MarkupLine("[bold green]X Matcha[/]");
-                    AnsiConsole.MarkupLine("[green]X marchează matcha[/]");
-                    AnsiConsole.MarkupLine("[grey]1) Logare Client  2) Logare Administrator  3) Iesire[/]");
-                    AnsiConsole.MarkupLine("[grey](Mărește fereastra pentru UI complet)[/]");
-                    return;
-                }
+            if (list.Count > max) list = list.GetRange(0, max);
+            return list;
+        }
+          
+        // =================== START SCREEN ===================
 
-                // TOP BAR
-                var tabs = new Grid();
-                tabs.AddColumn(new GridColumn().LeftAligned());
-                tabs.AddColumn(new GridColumn().Centered());
-                tabs.AddColumn(new GridColumn().RightAligned());
-                tabs.AddRow(
-                    new Markup("[bold green]General[/] [grey]|[/] Statistici [grey]|[/] Reviews [grey]|[/] Start"),
-                    new Markup("[grey]X Matcha v1.0[/]"),
-                    new Markup($"[grey]{DateTime.Now:HH:mm}[/]")
-                );
+        static void RandareEcranStart(SistemMatcha sistem, string asciiArt)
+        {
+            AnsiConsole.Clear();
 
+            int w = AnsiConsole.Profile.Width;
+            int h = AnsiConsole.Profile.Height;
+
+            if (w < 90 || h < 28)
+            {
+                AnsiConsole.MarkupLine("[bold green]X Matcha[/]");
+                AnsiConsole.MarkupLine("[green]X marchează matcha[/]");
+                AnsiConsole.MarkupLine("[grey]1) Logare Client  2) Logare Administrator  3) Ieșire[/]");
+                AnsiConsole.MarkupLine("[grey](Mărește fereastra pentru UI complet)[/]");
+                return;
+            }
+
+            // TOP BAR
+            var tabs = new Grid();
+            tabs.AddColumn(new GridColumn().LeftAligned());
+            tabs.AddColumn(new GridColumn().Centered());
+            tabs.AddColumn(new GridColumn().RightAligned());
+            tabs.AddRow(
+                new Markup("[bold green]General[/] [grey]|[/] Statistici [grey]|[/] Reviews [grey]|[/] Start"),
+                new Markup("[grey]X Matcha v1.0[/]"),
+                new Markup($"[grey]{DateTime.Now:HH:mm}[/]")
+            );
+
+            AnsiConsole.Write(
+                new Panel(tabs)
+                    .Border(BoxBorder.Double)
+                    .BorderColor(Color.Green)
+                    .Expand()
+            );
+
+            // TITLU
+            if (h >= 34)
+                AnsiConsole.Write(Align.Center(new FigletText("X Matcha").Color(Color.Green)));
+            else
                 AnsiConsole.Write(
-                    new Panel(tabs)
+                    new Panel(Align.Center(new Markup("[bold green]X Matcha[/]")))
                         .Border(BoxBorder.Double)
                         .BorderColor(Color.Green)
                         .Expand()
                 );
 
-                // TITLU MARE (Figlet) doar dacă avem înălțime suficientă
-                if (h >= 34)
-                {
-                    var fig = new FigletText("X Matcha").Color(Color.Green);
-                    AnsiConsole.Write(Align.Center(fig));
-                }
-                else
-                {
-                    AnsiConsole.Write(new Panel(Align.Center(new Markup("[bold green]X Matcha[/]")))
-                        .Border(BoxBorder.Double)
-                        .BorderColor(Color.Green)
-                        .Expand());
-                }
-
-                // SUBTITLU + descriere (mai mic decât titlul)
-                var header = new Panel(
-                        new Rows(
-                            Align.Center(new Markup("[green]X marchează matcha[/]")),
-                            Align.Center(new Markup("[grey]Prima aplicație care aduce în același loc clienții, managerii și matcheriile din propriul tău oraș![/]"))
-                        ))
-                    .Border(BoxBorder.Rounded)
-                    .BorderColor(Color.Green)
-                    .Expand();
-
-                AnsiConsole.Write(header);
-
-                // Build panels: stats+charts, reviews, ascii
-                var statsPanel = ConstruiestePanelStatisticiSiGrafice(sistem);
-                var reviewsPanel = ConstruiestePanelTestimoniale();
-                var asciiPanel = ConstruiestePanelAscii(asciiArt);
-
-                // Layout adaptiv (în funcție de lățime)
-                if (w >= 140)
-                {
-                    var grid = new Grid();
-                    grid.AddColumn(new GridColumn()); // stânga
-                    grid.AddColumn(new GridColumn()); // mijloc
-                    grid.AddColumn(new GridColumn()); // dreapta
-                    grid.AddRow(statsPanel, reviewsPanel, asciiPanel);
-                    AnsiConsole.Write(grid);
-                }
-                else if (w >= 105)
-                {
-                    var grid = new Grid();
-                    grid.AddColumn(new GridColumn());
-                    grid.AddColumn(new GridColumn());
-                    grid.AddRow(statsPanel, asciiPanel);
-                    AnsiConsole.Write(grid);
-
-                    AnsiConsole.WriteLine();
-                    AnsiConsole.Write(reviewsPanel);
-                }
-                else
-                {
-                    AnsiConsole.Write(statsPanel);
-                    AnsiConsole.WriteLine();
-                    AnsiConsole.Write(reviewsPanel);
-                    AnsiConsole.WriteLine();
-                    AnsiConsole.Write(asciiPanel);
-                }
-
-                // "Butoane" + instrucțiuni
-                AnsiConsole.WriteLine();
-                AnsiConsole.Write(
-                    new Panel(new Markup(
-                        "[black on green]   1  LOGARE CLIENT           [/]\n" +
-                        "[black on green]   2  LOGARE ADMINISTRATOR    [/]\n\n" +
-                        "[white on darkred]   3  IESIRE (sau ESC)        [/] \n\n" +
-                        "[grey]Hint: poți redimensiona fereastra, UI-ul se reface automat. (R = refresh)[/]"
+            // SUBTITLU
+            var header = new Panel(
+                    new Rows(
+                        Align.Center(new Markup("[green]X marchează matcha[/]")),
+                        Align.Center(new Markup("[grey]Prima aplicație care aduce în același loc clienții, managerii și matcheriile din propriul tău oraș![/]"))
                     ))
-                    .Header("[bold green]🔐 Start[/]")
-                    .Border(BoxBorder.Double)
-                    .BorderColor(Color.Green)
-                    .Expand()
-                );
+                .Border(BoxBorder.Rounded)
+                .BorderColor(Color.Green)
+                .Expand();
+
+            AnsiConsole.Write(header);
+
+            // =================== AICI E DIFERENȚA: ASCII dictează înălțimea ===================
+            // max înălțime permisă de ecran
+            int maxBody = Math.Clamp(h - 26, 12, 30);
+
+            // calculăm câte linii are ASCII-ul (și îl limităm ca să nu iasă din ecran)
+            string asciiNormalized = (asciiArt ?? "").Replace("\r", "").TrimEnd('\n');
+            int asciiNaturalLines = CountLines(asciiNormalized);
+            int cardLines = Math.Clamp(asciiNaturalLines, 12, maxBody); // ASCII -> cardLines
+
+            if (w >= 140)
+            {
+                int colW = Math.Max(34, (w - 10) / 3);
+
+                // IMPORTANT: construim ASCII cu exact cardLines (clip+pad),
+                // iar celelalte două coloane primesc padding până la cardLines.
+                var asciiPanel = ConstruiestePanelAscii(asciiArt, colW, cardLines);
+                var statsPanel = ConstruiestePanelStatisticiSiGrafice(sistem, colW, cardLines);
+                var reviewsPanel = ConstruiestePanelTestimoniale(colW, cardLines);
+
+                var grid = new Grid();
+                grid.AddColumn(new GridColumn());
+                grid.AddColumn(new GridColumn());
+                grid.AddColumn(new GridColumn());
+                grid.AddRow(statsPanel, reviewsPanel, asciiPanel);
+
+                AnsiConsole.Write(grid);
+            }
+            else if (w >= 105)
+            {
+                int colW = Math.Max(40, (w - 8) / 2);
+
+                var asciiPanel = ConstruiestePanelAscii(asciiArt, colW, cardLines);
+                var statsPanel = ConstruiestePanelStatisticiSiGrafice(sistem, colW, cardLines);
+
+                var grid = new Grid();
+                grid.AddColumn(new GridColumn());
+                grid.AddColumn(new GridColumn());
+                grid.AddRow(statsPanel, asciiPanel);
+                AnsiConsole.Write(grid);
+
+                AnsiConsole.WriteLine();
+
+                // reviews jos (fără nevoie să fie la fix cu ASCII)
+                AnsiConsole.Write(ConstruiestePanelTestimoniale(w, Math.Clamp(cardLines, 10, 16)));
+            }
+            else
+            {
+                AnsiConsole.Write(ConstruiestePanelStatisticiSiGrafice(sistem, w, Math.Clamp(cardLines, 10, 16)));
+                AnsiConsole.WriteLine();
+                AnsiConsole.Write(ConstruiestePanelTestimoniale(w, Math.Clamp(cardLines, 10, 16)));
+                AnsiConsole.WriteLine();
+                AnsiConsole.Write(ConstruiestePanelAscii(asciiArt, w, Math.Clamp(cardLines, 10, 16)));
             }
 
-            static IRenderable ConstruiestePanelStatisticiSiGrafice(SistemMatcha sistem)
+            // BUTOANE
+            AnsiConsole.WriteLine();
+            AnsiConsole.Write(
+                new Panel(new Markup(
+                    "[black on green]   1  LOGARE CLIENT           [/]\n" +
+                    "[black on green]   2  LOGARE ADMINISTRATOR    [/]\n\n" +
+                    "[white on darkred]   3  IESIRE (sau ESC)        [/] \n\n" +
+                    "[grey]Hint: poți redimensiona fereastra, UI-ul se reface automat. (R = refresh)[/]"
+                ))
+                .Header("[bold green]Start[/]")
+                .Border(BoxBorder.Double)
+                .BorderColor(Color.Green)
+                .Expand()
+            );
+        }
+
+
+        // =================== STATISTICI (cu BreakdownChart ca înainte) ===================
+
+        static IRenderable ConstruiestePanelStatisticiSiGrafice(SistemMatcha sistem, int colWidth, int cardLines)
+        {
+            int nrMagazine = sistem.Magazine?.Count ?? 0;
+            int nrClienti = sistem.Clienti?.Count ?? 0;
+            int nrAdmins = sistem.Administratori?.Count ?? 0;
+
+            int totalProduse = 0, totalRezervari = 0, totalCapacitate = 0;
+            if (sistem.Magazine != null)
             {
-                int nrMagazine = sistem.Magazine?.Count ?? 0;
-                int nrClienti = sistem.Clienti?.Count ?? 0;
-                int nrAdmins = sistem.Administratori?.Count ?? 0;
-
-                int totalProduse = 0;
-                int totalRezervari = 0;
-                int totalCapacitate = 0;
-                if (sistem.Magazine != null)
-                {
-                    foreach (var m in sistem.Magazine)
-                    {
-                        totalProduse += (m.Meniu?.Count ?? 0);
-                        totalRezervari += (m.Rezervari?.Count ?? 0);
-                        totalCapacitate += m.Capacitate;
-                    }
-                }
-
-                int totalTranzactii = 0;
-                if (sistem.Clienti != null)
-                {
-                    foreach (var c in sistem.Clienti)
-                        totalTranzactii += (c.Istoric?.Count ?? 0);
-                }
-
-                // Chart 1 (dif. față de admin): Breakdown pe entități
-                var breakdown = new BreakdownChart()
-                    .Width(Math.Min(60, Math.Max(30, AnsiConsole.Profile.Width / 2 - 10)))
-                    .AddItem("Produse", Math.Max(1, totalProduse), Color.Green)
-                    .AddItem("Rezervari", Math.Max(1, totalRezervari), Color.Yellow)
-                    .AddItem("Tranzactii", Math.Max(1, totalTranzactii), Color.Aqua)
-                    .AddItem("Capacitate", Math.Max(1, totalCapacitate), Color.Olive);
-
-                // Chart 2: Top 5 matcherii după rezervări
-                var bar = new BarChart()
-                    .Label("[green]Top matcherii (rezervări)[/]")
-                    .CenterLabel();
-
-                int barW = Math.Max(24, Math.Min(50, AnsiConsole.Profile.Width / 2 - 10));
-                bar.Width(barW);
-
-                var top = GetTopMatcheriiByRezervari(sistem, 5);
-                if (top.Count == 0)
-                    bar.AddItem("N/A", 0, Color.Grey);
-                else
-                    foreach (var x in top)
-                        bar.AddItem(x.nume, x.val, Color.Green);
-
-                var content = new Rows(
-                    new Markup($"[bold]Magazine:[/] {nrMagazine}   [bold]Clienți:[/] {nrClienti}   [bold]Admini:[/] {nrAdmins}"),
-                    new Markup($"[bold]Produse:[/] {totalProduse}   [bold]Rezervări:[/] {totalRezervari}   [bold]Tranzacții:[/] {totalTranzactii}"),
-                    new Rule("[green]Overview[/]"),
-                    breakdown,
-                    new Rule("[green]Popularitate[/]"),
-                    bar
-                );
-
-                return new Panel(content)
-                    .Header("[bold green]📊 Statistici rețea[/]")
-                    .Border(BoxBorder.Rounded)
-                    .BorderColor(Color.Green)
-                    .Expand();
-            }
-
-            static List<(string nume, int val)> GetTopMatcheriiByRezervari(SistemMatcha sistem, int max)
-            {
-                var list = new List<(string nume, int val)>();
-
-                if (sistem.Magazine == null) return list;
-
                 foreach (var m in sistem.Magazine)
                 {
-                    int rez = m.Rezervari?.Count ?? 0;
-                    list.Add((m.Nume, rez));
+                    totalProduse += (m.Meniu?.Count ?? 0);
+                    totalRezervari += (m.Rezervari?.Count ?? 0);
+                    totalCapacitate += m.Capacitate;
+                }
+            }
+
+            int totalTranzactii = 0;
+            if (sistem.Clienti != null)
+                foreach (var c in sistem.Clienti)
+                    totalTranzactii += (c.Istoric?.Count ?? 0);
+
+            var rows = new List<IRenderable>
+            {
+                new Markup($"[bold]Magazine:[/] {nrMagazine}   [bold]Clienți:[/] {nrClienti}   [bold]Admini:[/] {nrAdmins}"),
+                new Markup($"[bold]Produse:[/] {totalProduse}   [bold]Rezervări:[/] {totalRezervari}   [bold]Tranzacții:[/] {totalTranzactii}"),
+                new Rule("[green]Overview[/]")
+            };
+
+            // 1) BreakdownChart DOAR pe valori comparabile (fără Capacitate, că domină)
+            int chartW = Math.Clamp(colWidth - 8, 22, 60);
+            int sumAct = totalProduse + totalRezervari + totalTranzactii;
+
+            if (sumAct <= 0)
+            {
+                rows.Add(new Markup("[grey]Nu există date pentru activitate.[/]"));
+            }
+            else
+            {
+                var breakdownAct = new BreakdownChart()
+                    .Width(chartW)
+                    .AddItem("Produse", totalProduse, Color.Aqua)      // mai distinct
+                    .AddItem("Rezervari", totalRezervari, Color.Yellow)
+                    .AddItem("Tranzactii", totalTranzactii, Color.Magenta1);
+
+                rows.Add(breakdownAct);
+            }
+
+            // 2) Ocupare: arată clar Rezervări vs Locuri libere (aici Capacitatea are sens)
+            rows.Add(new Rule("[green]Ocupare[/]"));
+
+            int cap = Math.Max(1, totalCapacitate);
+            int ocupate = Math.Clamp(totalRezervari, 0, cap);
+            int libere = Math.Max(0, cap - ocupate);
+            int pct = (int)Math.Round(100.0 * ocupate / cap);
+
+            var ocupare = new BreakdownChart()
+                .Width(chartW)
+                .AddItem("Ocupate", ocupate, Color.Yellow)
+                .AddItem("Libere", libere, Color.Green);
+
+            rows.Add(ocupare);
+            rows.Add(new Markup($"[grey]Capacitate totală:[/] [white]{cap}[/]   [grey]Ocupare:[/] [white]{pct}%[/]"));
+
+            // Popularitate (ca înainte, simplu)
+            rows.Add(new Rule("[green]Popularitate[/]"));
+            var top = GetTopMatcheriiByRezervari(sistem, 3);
+
+            if (top.Count == 0)
+            {
+                rows.Add(new Markup("[grey]N/A[/]"));
+            }
+            else
+            {
+                int nameW = Math.Max(10, colWidth - 14);
+                foreach (var x in top)
+                {
+                    string name = CutNoDots(x.nume, nameW);
+                    rows.Add(new Markup($"[white]{Markup.Escape(name)}[/]  [green]{x.val}[/]"));
+                }
+            }
+
+            // padding până la cardLines (dictat de ASCII)
+            int used = rows.Count;
+            int pad = Math.Max(0, cardLines - used);
+            rows.Add(new Text(BlankLines(pad)));
+
+            return new Panel(new Rows(rows.ToArray()))
+                .Header("[bold green]Statistici retea[/]")
+                .Border(BoxBorder.Rounded)
+                .BorderColor(Color.Green)
+                .Expand();
+        }
+
+
+
+        // =================== TESTIMONIALE (fără "...", cu spațiu între ele) ===================
+
+        static IRenderable ConstruiestePanelTestimoniale(int colWidth, int cardLines)
+        {
+            var reviews = new[]
+            {
+                ("Alex B.", 5, "Matcha extraordinară, servicii premium și un personal foarte atent la nevoile clientului."),
+                ("Mara D.", 4, "Atmosferă super cozy, meniul e variat și matcha latte-ul e top. Aș mai adăuga doar câteva deserturi noi."),
+                ("Radu P.", 5, "Rezervarea a mers rapid, iar comanda a venit foarte repede. Calitate constantă, perfect pentru zile aglomerate."),
+                ("Ioana S.", 4, "Prețuri ok, locații bune, și îmi place că văd totul într-un singur loc. UI-ul e chiar fun.")
+            };
+
+            int innerW = Math.Max(24, colWidth - 6);
+
+            var rows = new List<IRenderable>
+            {
+                new Markup("[grey]Ultimele review-uri[/]")
+            };
+
+            // câte linii mai avem disponibile în panel (în afară de titlul "Ultimele...")
+            int remaining = Math.Max(0, cardLines - rows.Count);
+
+            foreach (var r in reviews)
+            {
+                string stars = Stele(r.Item2);
+                string author = r.Item1;
+                string text = r.Item3;
+
+                string prefixPlain = $"{stars} {author} - ";
+                int prefixLen = prefixPlain.Length;
+
+                // cât loc rămâne pe prima linie pentru text (după prefix)
+                int firstTextW = Math.Max(5, innerW - prefixLen);
+
+                // pentru liniile de continuare, indentăm la aceeași coloană ca textul
+                string indent = new string(' ', prefixLen);
+                int nextTextW = Math.Max(5, innerW - indent.Length);
+
+                // împachetează textul pe linii (fără tăiere cu ...)
+                var wrapped = WrapWithFirstWidth(text, firstTextW, nextTextW);
+
+                // câte linii ocupă review-ul? (prima + continuări) + 1 linie goală între reviews
+                int needed = wrapped.Count + 1;
+
+                // dacă NU încape integral, ne oprim (nu afișăm review tăiat)
+                if (needed > remaining)
+                    break;
+
+                // prima linie (cu prefix colorat)
+                rows.Add(new Markup(
+                    $"[yellow]{Markup.Escape(stars)}[/] " +
+                    $"[green]{Markup.Escape(author)}[/] " +
+                    $"[grey]-[/] " +
+                    $"[white]{Markup.Escape(wrapped[0])}[/]"
+                ));
+
+                // continuări (indent + text)
+                for (int i = 1; i < wrapped.Count; i++)
+                {
+                    rows.Add(new Markup($"[white]{Markup.Escape(indent + wrapped[i])}[/]"));
                 }
 
-                // sort desc
-                list.Sort((a, b) => b.val.CompareTo(a.val));
+                // spațiu între testimoniale
+                rows.Add(new Text(""));
 
-                if (list.Count > max) list = list.GetRange(0, max);
-                return list;
+                remaining -= needed;
             }
 
-            static IRenderable ConstruiestePanelTestimoniale()
+            // padding până la cardLines (dictat de ASCII)
+            int used = rows.Count;
+            int pad = Math.Max(0, cardLines - used);
+            rows.Add(new Text(BlankLines(pad)));
+
+            return new Panel(new Rows(rows.ToArray()))
+                .Header("[bold green]Testimoniale[/]")
+                .Border(BoxBorder.Rounded)
+                .BorderColor(Color.Green)
+                .Expand();
+        }
+
+
+
+        // =================== ASCII (exact cardLines; el dictează) ===================
+
+        static IRenderable ConstruiestePanelAscii(string asciiArt, int colWidth, int cardLines)
+        {
+            asciiArt ??= "";
+            string normalized = asciiArt.Replace("\r", "").TrimEnd('\n');
+
+            int safeWidth = Math.Max(20, colWidth - 8);
+            int maxLine = MaxLineLength(normalized);
+
+            string body;
+
+            if (maxLine > safeWidth)
             {
-                // testimoniale generate (poți schimba oricând)
-                var reviews = new[]
-                {
-                    ("Alex B.", 5, "Matcha extraordinară, servicii premium și un personal foarte atent la nevoile clientului. Cu siguranță voi mai reveni!"),
-                    ("Mara D.", 4, "Atmosferă super cozy, meniul e variat și matcha latte-ul e top. Aș mai adăuga doar câteva deserturi noi."),
-                    ("Radu P.", 5, "Rezervarea a mers rapid, iar comanda a venit foarte repede. Calitate constantă, perfect pentru zile aglomerate."),
-                    ("Ioana S.", 4, "Prețuri ok, locații bune, și îmi place că văd totul într-un singur loc. UI-ul e chiar fun.")
-                };
+                body =
+                    "ASCII art prea lat pentru coloana curentă.\n" +
+                    "Mărește fereastra sau folosește un art mai îngust.";
+            }
+            else
+            {
+                body = normalized;
+            }
 
-                var table = new Table().Border(TableBorder.Rounded);
-                table.AddColumn(new TableColumn("[bold]Rating[/]").Centered());
-                table.AddColumn("Review");
+            // clip + pad la EXACT cardLines
+            string fixedLines = PadOrClipToLines(body, cardLines);
 
-                foreach (var r in reviews)
+            return new Panel(Align.Center(new Text(fixedLines)))
+                .Header("[bold green]Art[/]")
+                .Border(BoxBorder.Rounded)
+                .BorderColor(Color.Green)
+                .Expand();
+        }
+
+
+        // =================== HELPERS ===================
+
+        static string BlankLines(int n)
+        {
+            if (n <= 0) return "";
+            var sb = new StringBuilder();
+            for (int i = 0; i < n; i++) sb.AppendLine();
+            return sb.ToString();
+        }
+
+        static int CountLines(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return 1;
+            return s.Replace("\r", "").Split('\n').Length;
+        }
+
+        static int MaxLineLength(string s)
+        {
+            if (string.IsNullOrEmpty(s)) return 0;
+            var lines = s.Replace("\r", "").Split('\n');
+            int max = 0;
+            foreach (var line in lines)
+                if (line.Length > max) max = line.Length;
+            return max;
+        }
+
+        // taie fără "..."
+        static string CutNoDots(string s, int max)
+        {
+            if (string.IsNullOrEmpty(s) || max <= 0) return "";
+            if (s.Length <= max) return s;
+            return s.Substring(0, max);
+        }
+
+        // fix la N linii (ASCII dictează; celelalte se aliniază)
+        static string PadOrClipToLines(string s, int linesWanted)
+        {
+            if (linesWanted <= 0) return "";
+            string[] lines = (s ?? "").Replace("\r", "").Split('\n');
+
+            var sb = new StringBuilder();
+
+            int take = Math.Min(linesWanted, lines.Length);
+            for (int i = 0; i < take; i++)
+            {
+                sb.Append(lines[i]);
+                if (i < linesWanted - 1) sb.Append('\n');
+            }
+
+            // padding dacă nu ajunge
+            for (int i = take; i < linesWanted; i++)
+            {
+                sb.Append('\n');
+            }
+
+            return sb.ToString();
+        }
+
+        static string Stele(int n)
+        {
+            n = Math.Clamp(n, 0, 5);
+            return new string('★', n) + new string('☆', 5 - n);
+        }
+        static List<string> WrapWithFirstWidth(string text, int firstWidth, int nextWidth)
+        {
+            var result = new List<string>();
+            if (string.IsNullOrWhiteSpace(text))
+            {
+                result.Add("");
+                return result;
+            }
+
+            var words = text.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+
+            // construim prima linie cu firstWidth
+            int idx = 0;
+            string line = "";
+
+            void FlushLine()
+            {
+                result.Add(line);
+                line = "";
+            }
+
+            int currentWidth = firstWidth;
+
+            while (idx < words.Length)
+            {
+                string w = words[idx];
+
+                // dacă un cuvânt e mai mare decât width, îl spargem (rar, dar safe)
+                if (w.Length > currentWidth)
                 {
-                    string stars = Stele(r.Item2);
-                    table.AddRow(
-                        $"[yellow]{stars}[/]\n[grey]{Markup.Escape(r.Item1)}[/]",
-                        $"[white]{Markup.Escape(r.Item3)}[/]"
-                    );
+                    if (!string.IsNullOrEmpty(line))
+                        FlushLine();
+
+                    int start = 0;
+                    while (start < w.Length)
+                    {
+                        int take = Math.Min(currentWidth, w.Length - start);
+                        result.Add(w.Substring(start, take));
+                        start += take;
+
+                        // după prima linie, trecem pe nextWidth
+                        currentWidth = nextWidth;
+                    }
+
+                    idx++;
+                    continue;
                 }
 
-                return new Panel(table)
-                    .Header("[bold green]⭐ Testimoniale[/]")
-                    .Border(BoxBorder.Rounded)
-                    .BorderColor(Color.Green)
-                    .Expand();
-            }
-
-            static string Stele(int n)
-            {
-                n = Math.Max(0, Math.Min(5, n));
-                return new string('★', n) + new string('☆', 5 - n);
-            }
-
-            static IRenderable ConstruiestePanelAscii(string asciiArt)
-            {
-                // dacă ASCII-ul e prea lat, îl înlocuim cu un mesaj (ca să nu “strice” layout-ul)
-                int maxLine = MaxLineLength(asciiArt);
-                int w = AnsiConsole.Profile.Width;
-                int safe = Math.Max(30, w / 3 - 6);
-
-                IRenderable inner;
-                if (maxLine > safe)
+                // încercăm să îl adăugăm pe linia curentă
+                if (string.IsNullOrEmpty(line))
                 {
-                    inner = new Markup("[grey]ASCII art prea lat pentru fereastra curentă.\nMărește consola sau folosește un art mai îngust.[/]");
+                    line = w;
+                    idx++;
                 }
                 else
                 {
-                    // Text (nu Markup) ca să nu interpreteze [] sau alte simboluri
-                    inner = Align.Center(new Text(asciiArt));
+                    if (line.Length + 1 + w.Length <= currentWidth)
+                    {
+                        line += " " + w;
+                        idx++;
+                    }
+                    else
+                    {
+                        FlushLine();
+                        currentWidth = nextWidth; // după prima linie
+                    }
                 }
-
-                return new Panel(inner)
-                    .Header("[bold green]🍵 Art[/]")
-                    .Border(BoxBorder.Rounded)
-                    .BorderColor(Color.Green)
-                    .Expand();
             }
 
-            static int MaxLineLength(string s)
+            if (!string.IsNullOrEmpty(line))
+                result.Add(line);
+
+            // asigurăm minim 1 linie
+            if (result.Count == 0) result.Add("");
+            return result;
+        }
+
+
+
+            
+
+
+            static string ClipToMaxLines(string s, int maxLines)
             {
-                if (string.IsNullOrEmpty(s)) return 0;
+                if (string.IsNullOrEmpty(s)) return "";
                 var lines = s.Replace("\r", "").Split('\n');
-                int max = 0;
-                foreach (var line in lines)
-                    if (line.Length > max) max = line.Length;
-                return max;
+
+                if (lines.Length <= maxLines) return s;
+
+                // ia primele maxLines (stabil)
+                var sb = new StringBuilder();
+                for (int i = 0; i < maxLines; i++)
+                {
+                    sb.Append(lines[i]);
+                    if (i < maxLines - 1) sb.Append('\n');
+                }
+                return sb.ToString();
             }
+
+            static string Truncate(string s, int max)
+            {
+                if (string.IsNullOrEmpty(s) || max <= 0) return "";
+                if (s.Length <= max) return s;
+                if (max <= 3) return s.Substring(0, max);
+                return s.Substring(0, max - 3) + "...";
+            }
+            
+
+
 
 
 
