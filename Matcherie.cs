@@ -3,9 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace ConsoleApp5
 {
-    /// <summary>
     /// Model magazin (matcherie): program, capacitate, meniu, rezervări.
-    /// </summary>
     public class Matcherie
     {
         public string Nume { get; private set; }
@@ -23,10 +21,8 @@ namespace ConsoleApp5
             Meniu = meniu ?? new List<Matcha>();
             Rezervari = rezervari ?? new List<Rezervare>();
         }
-
-        /// <summary>
+        
         /// Afișează meniul în tabel Spectre.Console.
-        /// </summary>
         public void AfiseazaMeniu()
         {
             var table = new Table()
@@ -51,28 +47,22 @@ namespace ConsoleApp5
 
             AnsiConsole.Write(table);
         }
-
-        /// <summary>
+        
         /// Set program (validare minimă).
-        /// </summary>
         public void SetProgram(string noulProgram)
         {
             if (!string.IsNullOrEmpty(noulProgram))
                 Program = noulProgram;
         }
-
-        /// <summary>
+        
         /// Set capacitate (pozitivă).
-        /// </summary>
         public void SetCapacitate(int nouaCapacitate)
         {
             if (nouaCapacitate > 0)
                 Capacitate = nouaCapacitate;
         }
-
-        /// <summary>
+        
         /// Șterge rezervare din listă (safe).
-        /// </summary>
         public bool StergeRezervare(Rezervare rezervare)
         {
             if (rezervare == null) return false;

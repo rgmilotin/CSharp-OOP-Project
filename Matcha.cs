@@ -2,9 +2,7 @@ using System.Text.Json.Serialization;
 
 namespace ConsoleApp5
 {
-    /// <summary>
     /// Model produs: un item din meniul unei matcherii.
-    /// </summary>
     public class Matcha
     {
         [JsonInclude] public string nume { get; set; }

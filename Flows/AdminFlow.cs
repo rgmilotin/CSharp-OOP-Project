@@ -7,10 +7,8 @@ using System.Threading;
 
 namespace ConsoleApp5
 {
-    /// <summary>
     /// Full Admin flow: login + dashboard + submenus (Matcheries/Reservation Types/Transactions/Monitoring).
     /// No dependency on AdministratorMatcha class (logic is here).
-    /// </summary>
     public static class AdminFlow
     {
         public static void Run(SistemMatcha sistem)
@@ -197,7 +195,7 @@ namespace ConsoleApp5
             AnsiConsole.WriteLine();
         }
 
-        // -------------------- MATCHERIES (CRUD) --------------------
+        // -------------------- MATCHERIES --------------------
 
         private static void SubmeniuMatcheries(SistemMatcha sistem)
         {
@@ -217,7 +215,7 @@ namespace ConsoleApp5
                             "Create matchery",
                             "Edit matchery (schedule/capacity)",
                             "Delete matchery",
-                            "Products menu (CRUD)",
+                            "Products menu",
                             "Back"
                         }));
 
@@ -543,7 +541,7 @@ namespace ConsoleApp5
             AnsiConsole.MarkupLine("[green]Product deleted.[/]");
         }
 
-        // -------------------- RESERVATION TYPES (CRUD) --------------------
+        // -------------------- RESERVATION TYPES --------------------
 
         private static void SubmeniuReservationTypes(SistemMatcha sistem)
         {

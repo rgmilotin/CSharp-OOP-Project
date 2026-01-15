@@ -19,8 +19,7 @@ namespace ConsoleApp5
             var left = new Layout("Meniu");
             var right = new Layout("Profil");
             root.SplitColumns(left, right);
-
-            // (în versiuni mai vechi, Ratio e PROPERTY)
+            
             left.Ratio = 2;
             right.Ratio = 1;
 
@@ -41,7 +40,7 @@ namespace ConsoleApp5
             }
             else
             {
-                // Poți sorta cum vrei: alfabet, popularitate etc.
+                
                 var list = sistem.Magazine
                     .OrderBy(m => m.Nume)
                     .Take(maxMatcherii)

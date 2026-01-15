@@ -3,9 +3,7 @@ using System.Text.Json.Serialization;
 
 namespace ConsoleApp5
 {
-    /// <summary>
     /// Model rezervare: tip, preț, limitări, beneficii, client, matcherie.
-    /// </summary>
     public class Rezervare
     {
         public string Tip { get; set; }
@@ -25,10 +23,8 @@ namespace ConsoleApp5
             ClientID = clientID;
             Matcherie = matcherie;
         }
-
-        /// <summary>
+        
         /// Colectează interactiv datele rezervării (utilitar).
-        /// </summary>
         public void CreazaInteractiv()
         {
             AnsiConsole.Write(new Rule("[yellow]Configurare Rezervare Nouă[/]"));
@@ -41,7 +37,7 @@ namespace ConsoleApp5
             AnsiConsole.MarkupLine("[green]Datele rezervării au fost colectate cu succes![/]");
         }
 
-        // Setteri “safe” (păstrați din codul tău)
+        // Setteri “safe” 
         public void SetTip(string noulTip) { if (!string.IsNullOrWhiteSpace(noulTip)) Tip = noulTip; }
         public void SetPret(decimal noulPret) { if (noulPret >= 0) Pret = noulPret; }
         public void SetLimitari(string noileLimitari) { Limitari = noileLimitari; }

@@ -4,9 +4,8 @@ using System.Linq;
 
 namespace ConsoleApp5
 {
-    /// <summary>
+
     /// Seed de date demo (folosit când sistemul e gol).
-    /// </summary>
     public static class TestDataSeeder
     {
         public static void IncarcaDateTest(SistemMatcha sistem)
@@ -16,7 +15,7 @@ namespace ConsoleApp5
             sistem.Administratori ??= new List<AdminAccount>();
             sistem.TipuriRezervari ??= new List<TipRezervare>();
 
-            // -------------------- TIPURI REZERVARI (CRUD Admin) --------------------
+            // -------------------- TIPURI REZERVARI --------------------
             AddTipRezervareIfMissing(sistem, new TipRezervare(
                 "Familie",
                 35m,
@@ -161,8 +160,8 @@ namespace ConsoleApp5
 
         private static void AddProductIfMissing(Matcherie matcherie, Matcha produs)
         {
-            // Atenție: Meniu are private set => NU îi reasigna lista, doar adaugă în ea.
-            if (matcherie.Meniu == null) return; // teoretic n-ar trebui să fie null (constructorul o inițializează)
+            
+            if (matcherie.Meniu == null) return; 
 
             bool exists = matcherie.Meniu.Any(p => p.nume.Equals(produs.nume, StringComparison.OrdinalIgnoreCase));
             if (!exists) matcherie.Meniu.Add(produs);
@@ -194,7 +193,7 @@ namespace ConsoleApp5
 
             foreach (var r in rezervari)
             {
-                // evită duplicate grosiere (Tip + Client + Matcherie)
+                // evităm duplicate grosiere (Tip + Client + Matcherie)
                 bool exists = m.Rezervari.Any(x =>
                     (x.Tip ?? "").Equals(r.Tip ?? "", StringComparison.OrdinalIgnoreCase) &&
                     (x.ClientID ?? "").Equals(r.ClientID ?? "", StringComparison.OrdinalIgnoreCase));

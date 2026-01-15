@@ -1,8 +1,6 @@
 namespace ConsoleApp5
 {
-    /// <summary>
     /// Model tranzacție: se adaugă în istoricul clientului.
-    /// </summary>
     public class Tranzactie
     {
         public string Id { get; private set; }

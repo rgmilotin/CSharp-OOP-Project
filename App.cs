@@ -2,9 +2,7 @@ using Spectre.Console;
 
 namespace ConsoleApp5
 {
-    /// <summary>
     /// Orchestrator-ul aplicației (load, seed, start loop, routing).
-    /// </summary>
     public static class App
     {
         public static void Run()
@@ -47,10 +45,8 @@ namespace ConsoleApp5
                 }
             }
         }
-
-        /// <summary>
+        
         /// Protecție la liste null după deserializare.
-        /// </summary>
         private static void EnsureCollections(SistemMatcha sistem)
         {
             sistem.Magazine ??= new List<Matcherie>();

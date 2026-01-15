@@ -6,9 +6,8 @@ using System.Linq;
 
 namespace ConsoleApp5
 {
-    /// <summary>
+
     /// Flow-ul complet pentru client (selectare client + meniul client).
-    /// </summary>
     public static class ClientFlow
     {
         public static void Run(SistemMatcha sistem)

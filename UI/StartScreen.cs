@@ -4,9 +4,7 @@ using System.Text;
 
 namespace ConsoleApp5
 {
-    /// <summary>
     /// Start Screen complet (ASCII, statistici, reviews) + input non-blocking.
-    /// </summary>
     public static class StartScreen
     {
         public static string AfiseazaEcranStartSiAlegeRol(SistemMatcha sistem)
@@ -404,7 +402,7 @@ namespace ConsoleApp5
             return fallback;
         }
 
-        // -------------------- HELPERS (exact ca înainte, doar mutate) --------------------
+        // -------------------- HELPERS --------------------
 
         private static string BlankLines(int n)
         {
@@ -534,7 +532,7 @@ namespace ConsoleApp5
             return result;
         }
 
-        // -------------------- (PĂSTRAT) Animatie Steam --------------------
+        // -------------------- Animatie Steam --------------------
 
         public static void RulareAnimatieMatchaSteam()
         {

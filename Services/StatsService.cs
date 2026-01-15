@@ -1,8 +1,6 @@
 namespace ConsoleApp5
 {
-    /// <summary>
     /// Statistici / agregări pentru UI.
-    /// </summary>
     public static class StatsService
     {
         public static List<(string nume, int val)> GetTopMatcheriiByRezervari(SistemMatcha sistem, int max)
