@@ -26,8 +26,11 @@ namespace ConsoleApp5
                 .ConfigureServices(services =>
                 {
                     services.AddSingleton<AppRunner>();
+                    services.AddSingleton<SistemCoordinator>(); // ✅ nou
                 })
                 .Build();
+
+            ServiceLocator.Provider = host.Services; // ✅ nou
 
             host.Services.GetRequiredService<AppRunner>().Run();
         }

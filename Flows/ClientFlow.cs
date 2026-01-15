@@ -80,8 +80,9 @@ namespace ConsoleApp5
                         break;
 
                     case "Anulează Rezervare Masă":
-                        AnuleazaRezervare(client);
+                        AnuleazaRezervare(client, sistem);
                         break;
+
 
                     case "Istoric Tranzacții":
                         AfiseazaIstoric(client);
@@ -329,7 +330,7 @@ namespace ConsoleApp5
 
         // -------------------- ANULARE REZERVARE --------------------
 
-        private static void AnuleazaRezervare(ClientAccount client)
+        private static void AnuleazaRezervare(ClientAccount client, SistemMatcha sistem)
         {
             if (client.Rezervari == null || client.Rezervari.Count == 0)
             {
@@ -350,14 +351,25 @@ namespace ConsoleApp5
                         return $"[[{numeEscapat}]] {tipEscapat} - [green]{r.Pret} RON[/]";
                     }));
 
-            if (AnsiConsole.Confirm($"Sigur dorești să anulezi rezervarea [yellow]{Markup.Escape(rezervareDeAnulat.Tip)}[/]?"))
+            if (!AnsiConsole.Confirm($"Sigur dorești să anulezi rezervarea [yellow]{Markup.Escape(rezervareDeAnulat.Tip)}[/]?"))
             {
-                rezervareDeAnulat.Matcherie?.Rezervari.Remove(rezervareDeAnulat);
-                client.Rezervari.Remove(rezervareDeAnulat);
-
-                AnsiConsole.MarkupLine("[bold green]Rezervarea a fost anulată cu succes![/]");
+                CommonUI.Pauza();
+                return;
             }
 
+            var coord = ServiceLocator.Get<SistemCoordinator>();
+
+            bool ok = coord.TryAnuleazaRezervare(client, rezervareDeAnulat, out string mesaj);
+
+            if (!ok)
+            {
+                AnsiConsole.MarkupLine($"[red]{Markup.Escape(mesaj)}[/]");
+                CommonUI.Pauza();
+                return;
+            }
+
+            CommonUI.SalvareSistem(sistem);
+            AnsiConsole.MarkupLine($"[bold green]{Markup.Escape(mesaj)}[/]");
             CommonUI.Pauza();
         }
 

@@ -443,7 +443,6 @@ namespace ConsoleApp5
 
         private static void AdaugaProdus(Matcherie matcherie, SistemMatcha sistem)
         {
-
             string nume = AnsiConsole.Ask<string>("Product name:");
 
             if (matcherie.Meniu.Any(p => string.Equals(p.nume, nume, StringComparison.OrdinalIgnoreCase)))
@@ -457,10 +456,24 @@ namespace ConsoleApp5
             int cantitate = AnsiConsole.Ask<int>("Stock quantity:");
             int calorii = AnsiConsole.Ask<int>("Calories:");
 
-            matcherie.Meniu.Add(new Matcha(nume, descriere, pret, cantitate, calorii));
+            var coord = ServiceLocator.Get<SistemCoordinator>();
+
+            bool ok = coord.TryAdaugaProdus(
+                matcherie,
+                new Matcha(nume, descriere, pret, cantitate, calorii),
+                out string mesaj
+            );
+
+            if (!ok)
+            {
+                AnsiConsole.MarkupLine($"[red]{Markup.Escape(mesaj)}[/]");
+                return;
+            }
+
             CommonUI.SalvareSistem(sistem);
-            AnsiConsole.MarkupLine("[green]Product added.[/]");
+            AnsiConsole.MarkupLine($"[green]{Markup.Escape(mesaj)}[/]");
         }
+
 
         private static void ModificaProdus(Matcherie matcherie, SistemMatcha sistem)
         {
